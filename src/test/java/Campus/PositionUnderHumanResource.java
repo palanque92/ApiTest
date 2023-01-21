@@ -13,7 +13,9 @@ import static org.hamcrest.Matchers.*;
 
 public class PositionUnderHumanResource {
 
-    String positionTenantId;
+    String id="63cbc671cf835c2388fe3964";
+    String positionID;
+    String positionTenantId="6390ef53f697997914ec20c2";
     String positionName;
     String positionShortName;
     Cookies cookies;
@@ -60,6 +62,7 @@ public class PositionUnderHumanResource {
 
 
 
+        positionID=
                 given()
                         .cookies(cookies)
                         .contentType(ContentType.JSON)
@@ -71,20 +74,24 @@ public class PositionUnderHumanResource {
                         .then()
                         .log().body()
                         .statusCode(201)
+                        .extract().jsonPath().getString("id")
         ;
     }
-    @Test
+
+    @Test(dependsOnMethods = "createPosition")
     public void createPositionNegative()
     {
 
         position ps = new position();
         ps.setName(positionName);
         ps.setShortName(positionShortName);
+        ps.setTenantId(positionTenantId);
 
 
                 given()
                         .cookies(cookies)
                         .contentType(ContentType.JSON)
+                        .log().uri()
                         .body(ps)
 
                         .when()
@@ -93,6 +100,70 @@ public class PositionUnderHumanResource {
                         .then()
                         .log().body()
                         .statusCode(400)
+                        .body("message",equalTo("The Position with Name \""+positionName+"\" already exists."))
+        ;
+    }
+
+    @Test(dependsOnMethods = "createPosition")
+    public void updatePosition()
+    {
+        positionName=getRandomName();
+        positionShortName=getRandomShortName();
+
+        position ps = new position();
+        ps.setName(positionName);
+        ps.setShortName(positionShortName);
+        ps.setTenantId(positionTenantId);
+        ps.setId(positionID);
+
+
+
+        given()
+                .cookies(cookies)
+                .contentType(ContentType.JSON)
+                .body(ps)
+
+                .when()
+                .put("school-service/api/employee-position")
+
+                .then()
+                .log().body()
+                .statusCode(200)
+        ;
+    }
+    @Test(dependsOnMethods = "updatePosition")
+    public void deletePosition()
+    {
+
+        given()
+                .cookies(cookies)
+                .pathParam("positionID",positionID)
+                .log().uri()
+
+                .when()
+                .delete("school-service/api/employee-position/{positionID}")
+
+                .then()
+                .log().body()
+                .statusCode(204)
+        ;
+    }
+
+    @Test(dependsOnMethods = "deletePosition")
+    public void deletePositionNegative()
+    {
+
+        given()
+                .cookies(cookies)
+                .pathParam("positionID",positionID)
+                .log().uri()
+
+                .when()
+                .delete("school-service/api/employee-position/{positionID}")
+
+                .then()
+                .log().body()
+                .statusCode(204)
         ;
     }
 
